@@ -33,9 +33,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
     'weather',
+
     'rest_framework',
     "corsheaders",
+    "celery",
+
 ]
 
 MIDDLEWARE = [
@@ -104,7 +108,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kathmandu'
 
 USE_I18N = True
 
@@ -135,3 +139,10 @@ CACHES = {
 CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
+
+CELERY_BEAT_SCHEDULE = {
+    'update-weather-cache-every-2-minutes': {
+        'task': 'weather_app.tasks.update_weather_cache',
+        'schedule': 120.0,  # Run every 2 minutes (in seconds)
+    },
+}

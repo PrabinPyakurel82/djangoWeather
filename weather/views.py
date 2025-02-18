@@ -38,7 +38,7 @@ class WeatherView(APIView):
 
                 cache.set(cache_key,weather_info,timeout=CACHE_TIMEOUT)
 
-                WeatherSearch.objects.create(city_name=city,timestamp=datetime.datetime.now)
+                WeatherSearch.objects.create(city_name=city,timestamp=datetime.datetime.now())
                 return Response(weather_info,status=status.HTTP_200_OK)
             
             return Response({"error": "Invalid city or API error"}, status=status.HTTP_400_BAD_REQUEST)
@@ -46,8 +46,17 @@ class WeatherView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 
-class SerachHistoryView(APIView):
+class SearchHistoryView(APIView):
     def get(self,request):
-        searches = WeatherSearch.objects.all().order_by("-timestamp")
-        serializer = WeatherSearchSerializer(searches,many=True)
-        return Response(serializer.data,status=status.HTTP_200_OK)
+        
+        weather_data = []
+        searches = WeatherSearch.objects.all().order_by("-timestamp")[:10]
+        
+        for search in searches:
+            city = search.city_name
+            cache_key = f"weather_{city.lower()}"
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                cached_data['timestamp']=search.timestamp
+                weather_data.append(cached_data) 
+        return Response(weather_data,status=status.HTTP_200_OK)
