@@ -1,14 +1,17 @@
 import datetime
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.core.cache import cache
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
 from .serializers import WeatherSerializer, WeatherSearchSerializer
-
 from .models import WeatherSearch
 from .make_request import get_weather
+
+CACHE_TIMEOUT = 600
 
 class WeatherView(APIView):
 
@@ -16,6 +19,13 @@ class WeatherView(APIView):
         serializer = WeatherSerializer(data=request.query_params)
         if serializer.is_valid():
             city = serializer.validated_data['city']
+
+            cache_key = f"weather_{city.lower()}"
+            cached_data = cache.get(cache_key)
+
+            if cached_data:
+                return Response(cached_data, status=status.HTTP_200_OK)
+            
             response = get_weather(city=city)
             if response.status_code == 200:
                 data = response.json()
@@ -25,6 +35,9 @@ class WeatherView(APIView):
                 "temperature" : data['main']['temp'],
                 'weather' : data['weather'][0]['description'],
                 }
+
+                cache.set(cache_key,weather_info,timeout=CACHE_TIMEOUT)
+
                 WeatherSearch.objects.create(city_name=city,timestamp=datetime.datetime.now)
                 return Response(weather_info,status=status.HTTP_200_OK)
             
