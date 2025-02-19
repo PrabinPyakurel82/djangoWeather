@@ -94,7 +94,7 @@ To search for weather data:
 The weather data for the city will be fetched and cached. If you search for the same city again, the cached data will be returned.
 
 ### Search History
-To view the search history of cities, visit `/search-history/` to see the list of the latest searched cities with their weather data.
+To view the search history of cities, visit `/history/` to see the list of the latest searched cities with their weather data.
 
 ## How It Works
 
