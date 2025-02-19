@@ -56,7 +56,20 @@ class SearchHistoryView(APIView):
             city = search.city_name
             cache_key = f"weather_{city.lower()}"
             cached_data = cache.get(cache_key)
+
             if cached_data:
-                cached_data['timestamp']=search.timestamp
-                weather_data.append(cached_data) 
-        return Response(weather_data,status=status.HTTP_200_OK)
+                weather_data.append(cached_data)
+
+            else:
+                response = get_weather(search.city_name)
+                if response.status_code == 200:
+                    data = response.json()
+                    weather_info = {
+                        "City":city,
+                        "temperature" : data['main']['temp'],
+                        'weather' : data['weather'][0]['description'],
+                     }
+                    cache.set(cache_key,weather_info,timeout=CACHE_TIMEOUT)
+                    weather_data.append(weather_info)
+            
+        return Response(weather_data,status.HTTP_200_OK)
